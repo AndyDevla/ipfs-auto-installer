@@ -6,26 +6,28 @@ This automated script simplifies the installation process for IPFS (InterPlaneta
 
 ## Features
 
-- Ease of Use: Say goodbye to manual installation steps. This script automates the process, saving you time and effort.
+- Ease of use, this script automates the process, saving you time and effort.
+- Flexible installation, choose how to run the installation script, online or offline.
 
 ## Installation
-ipfs-auto-installer requires any Debian distro Linux based. There are two methods to run the installation script, online and offline:
+ipfs-auto-installer requires any Debian distro Linux based. Follow the on-screen prompts to customize installation options as needed, sit back and relax while the installer takes care of the rest.
 
 ### Online:
 Open a Linux terminal to download and execute a bash script directly from GitHub.
 ```sh
- curl -sSL https://github.com/AndyDevla/ipfs-auto-installer/blob/main/ipfs_basic_install.sh | bash
+curl -s https://raw.githubusercontent.com/AndyDevla/ipfs-auto-installer/main/ipfs_basic_install.sh | sudo bash
 ```
-
-#### Offline:
+#### or 
+```sh
+wget -O - https://raw.githubusercontent.com/AndyDevla/ipfs-auto-installer/main/ipfs_basic_install.sh | sudo bash
+```
+### Offline:
 Clone this repository to your local machine and execute the script as "sudo" user.
 ```sh
- git clone https://github.com/AndyDevla/ipfs-auto-installer.git
- cd ipfs-auto-installer
- sudo bash ipfs-auto-installer.sh
+git clone https://github.com/AndyDevla/ipfs-auto-installer.git
+cd ipfs-auto-installer
+sudo bash ipfs-auto-installer.sh
 ```
-
-Follow the on-screen prompts to customize installation options as needed, sit back and relax while the installer takes care of the rest.
 
 ## Usage:
 After installation, you can start using IPFS commands right away. Simply open your terminal or command prompt and type the desired IPFS command.
