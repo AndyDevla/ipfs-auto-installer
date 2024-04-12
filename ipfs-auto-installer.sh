@@ -3,9 +3,13 @@ echo ''
 read -p 'Please, type your current username: ' user_name
 echo ''
 read -p 'Change max storage capacity in GB: ' max_storage
-# echo ''
+echo ''
 # But, you might want to skip this one if allowing people to access files through your gateway makes you nervous##
 read -p 'Enable as a public gateway? y/n: ' public_access
+
+read -p 'Enable IPFS service to start automatically at boot time? y/n: ' enable_service
+
+cd /home/${user_name}
 
 echo ''
 echo '          ╔══════════════════════════════════════════════════════════════╗'
@@ -49,18 +53,23 @@ echo ''
 # sudo -u ${user_name} ipfs init
 sudo -u ${user_name} ipfs init --profile server
 sudo -u ${user_name} ipfs config Datastore.StorageMax "${max_storage}GB"
-# comment the line below if you don't want direct access to the instance's gateway from outside
-
-
-#if [ "$public_access" = "y" ]; then
-#   ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
-#   echo "Public gateway enabled."
-#else
-#    ipfs config Addresses.Gateway /ip4/127.0.0.1/tcp/8080
-#    echo "Public gateway disabled."
-#fi
-
 sudo -u ${user_name} ipfs id | head -n 3 | tail -n 2 > IPFS_identity.txt
+
+if [ "$public_access" = "y" ]; then
+   ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
+    echo ''
+    echo '          ╔══════════════════════════════════════════════════════════════╗'
+    echo '          ║                 !Public gateway enabled!                     ║'
+    echo '          ╚══════════════════════════════════════════════════════════════╝'
+    echo ''
+else
+    ipfs config Addresses.Gateway /ip4/127.0.0.1/tcp/8080
+    echo ''
+    echo '          ╔══════════════════════════════════════════════════════════════╗'
+    echo '          ║                  Public gateway disabled                     ║'
+    echo '          ╚══════════════════════════════════════════════════════════════╝'
+    echo ''
+fi
 
 echo ''
 echo '          ╔══════════════════════════════════════════════════════════════╗'
@@ -68,7 +77,7 @@ echo '          ║                   Creating ipfs.service                     
 echo '          ╚══════════════════════════════════════════════════════════════╝'
 echo ''
 
-# ===================copy & paste all below =============
+# =======================================================
 sudo bash -c 'cat >/etc/systemd/system/ipfs.service <<EOL
 [Unit]
 Description=IPFS Service
@@ -85,7 +94,15 @@ WantedBy=default.target
 EOL'
 # =======================================================
 sudo systemctl daemon-reload
-# sudo systemctl enable ipfs.service
+if [ "$enable_service" = "y" ]; then
+    sudo systemctl enable ipfs.service
+else
+    echo ''
+    echo '          ╔══════════════════════════════════════════════════════════════╗'
+    echo '          ║           Remember starts ipfs.service after reboot          ║'
+    echo '          ╚══════════════════════════════════════════════════════════════╝'
+    echo ''
+fi
 sudo systemctl start ipfs.service 
 sudo systemctl status ipfs.service 
 
