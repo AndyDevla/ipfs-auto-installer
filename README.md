@@ -20,6 +20,8 @@ curl -s https://raw.githubusercontent.com/AndyDevla/ipfs-auto-installer/main/ipf
 #### or 
 ```sh
 wget -O - https://raw.githubusercontent.com/AndyDevla/ipfs-auto-installer/main/ipfs_basic_install.sh | sudo bash
+bash <(wget -qO- https://raw.githubusercontent.com/AndyDevla/ipfs-auto-installer/main/ipfs_basic_install.sh)
+sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/AndyDevla/ipfs-auto-installer/main/ipfs_basic_install.sh)" root
 ```
 ### Offline:
 Clone this repository to your local machine and execute the script as "sudo" user.
