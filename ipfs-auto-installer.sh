@@ -1,13 +1,20 @@
 #!/bin/bash
 echo ''
-read -p 'Please, type your current username: ' user_name
+# Kubo doesn't require sudo/root privileges, so it's best to run all ipfs commands as a regular user!
+read -p 'Confirm your current username: ' user_name
 echo ''
-read -p 'Change max storage capacity in GB: ' max_storage
+# If you are running a Kubo node in a data center, you should initialize IPFS with the server profile. 
+# Doing so will prevent IPFS from creating data center-internal traffic trying to discover local nodes
+read -p 'Will this node be run in a data center? y/n: ' server_profile
 echo ''
-# But, you might want to skip this one if allowing people to access files through your gateway makes you nervous##
+# You might want to skip this one if allowing people to access files through your gateway makes you nervous##
 read -p 'Enable as a public gateway? y/n: ' public_access
-
-read -p 'Enable IPFS service to start automatically at boot time? y/n: ' enable_service
+echo ''
+# If your instance gets restarted, IPFS will start automatically.
+read -p 'Starts IPFS automatically at boot time? y/n: ' enable_service
+echo ''
+# A soft upper limit for the size of the ipfs repository's datastore. 
+read -p 'Set the max storage capacity in GB: ' max_storage
 
 cd /home/${user_name}
 
@@ -17,12 +24,9 @@ echo '          ║                      Dowloading IPFS                        
 echo '          ╚══════════════════════════════════════════════════════════════╝'
 echo ''
 
-#wget https://dist.ipfs.tech/kubo/v0.26.0/kubo_v0.26.0_linux-amd64.tar.gz
 wget -qO- "https://dist.ipfs.tech/kubo/versions" > versions.txt
 versions="versions.txt"
-#line=$(grep -- "-rc1" "$versions" | tail -n 1)
-#latest=$(grep -B 1 "$line" "$versions" | head -n 1)
-latest=$(wget -qO- "https://dist.ipfs.tech/kubo/versions" | grep -- "-rc1" | tail -n 1 | xargs -I {} grep -B 1 {} versions.txt | head -n 1)
+latest=$(grep -v 'rc' versions.txt | tail -n 1)
 wget "https://dist.ipfs.tech/kubo/${latest}/kubo_${latest}_linux-amd64.tar.gz"
 rm versions.txt
 
@@ -37,7 +41,7 @@ cd kubo
 sudo bash install.sh
 cd .. 
 rm -rf kubo
-#ipfs --version 
+ipfs --version 
 
 # echo 'export IPFS_PATH=/data/ipfs' >>~/.bashrc
 # source ~/.bashrc
@@ -46,12 +50,21 @@ rm -rf kubo
 
 echo ''
 echo '          ╔══════════════════════════════════════════════════════════════╗'
-echo '          ║                   Initiating repository                      ║'
+echo '          ║                   !Initiating repository!                    ║'
 echo '          ╚══════════════════════════════════════════════════════════════╝'
 echo ''
 
-# sudo -u ${user_name} ipfs init
-sudo -u ${user_name} ipfs init --profile server
+if [ "$server_profile" = "y" ]; then
+    sudo -u ${user_name} ipfs init --profile server
+    echo ''
+    echo '          ╔══════════════════════════════════════════════════════════════╗'
+    echo '          ║      Internal data center traffic will not be generated.     ║'
+    echo '          ╚══════════════════════════════════════════════════════════════╝'
+    echo ''
+else
+    sudo -u ${user_name} ipfs init
+fi
+
 sudo -u ${user_name} ipfs config Datastore.StorageMax "${max_storage}GB"
 sudo -u ${user_name} ipfs id | head -n 3 | tail -n 2 > IPFS_identity.txt
 
@@ -59,21 +72,21 @@ if [ "$public_access" = "y" ]; then
    ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
     echo ''
     echo '          ╔══════════════════════════════════════════════════════════════╗'
-    echo '          ║                 !Public gateway enabled!                     ║'
+    echo '          ║                !Public gateway :8080 enabled!                ║'
     echo '          ╚══════════════════════════════════════════════════════════════╝'
     echo ''
 else
     ipfs config Addresses.Gateway /ip4/127.0.0.1/tcp/8080
     echo ''
     echo '          ╔══════════════════════════════════════════════════════════════╗'
-    echo '          ║                  Public gateway disabled                     ║'
+    echo '          ║                   !Public gateway disabled!                  ║'
     echo '          ╚══════════════════════════════════════════════════════════════╝'
     echo ''
 fi
 
 echo ''
 echo '          ╔══════════════════════════════════════════════════════════════╗'
-echo '          ║                   Creating ipfs.service                      ║'
+echo '          ║                Creating ipfs.service entry                   ║'
 echo '          ╚══════════════════════════════════════════════════════════════╝'
 echo ''
 
@@ -93,13 +106,14 @@ Group='"$user_name"'
 WantedBy=default.target
 EOL'
 # =======================================================
+
 sudo systemctl daemon-reload
 if [ "$enable_service" = "y" ]; then
     sudo systemctl enable ipfs.service
 else
     echo ''
     echo '          ╔══════════════════════════════════════════════════════════════╗'
-    echo '          ║           Remember starts ipfs.service after reboot          ║'
+    echo '          ║   Remember "sudo systemctl start ipfs.service" after reboot  ║'
     echo '          ╚══════════════════════════════════════════════════════════════╝'
     echo ''
 fi
@@ -123,7 +137,7 @@ sudo systemctl status ipfs.service
 #sudo nginx -s reload
 
 # ipfs config Addresses.Swarm '["/ip4/0.0.0.0/tcp/4001", "/ip4/0.0.0.0/tcp/8081/ws", "/ip6/::/tcp/4001"]' --json
-# try to ignore the next entry
+# try to ignore the next line
 # ipfs config --bool Swarm.EnableRelayHop false
 
 sudo systemctl restart ipfs.service
